@@ -1,0 +1,53 @@
+# Claude Code local config
+.claude/
+
+# Downloaded datasets (large Parquet files)
+data/cc-news/
+data/bbc-news/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model checkpoints and large files
+*.pt
+*.pth
+*.bin
+*.ckpt
+checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+
+# Experiment outputs (large)
+experiments/runs/
+wandb/

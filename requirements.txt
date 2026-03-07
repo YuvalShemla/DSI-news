@@ -1,0 +1,5 @@
+datasets
+pandas
+pyarrow
+tqdm
+google-generativeai

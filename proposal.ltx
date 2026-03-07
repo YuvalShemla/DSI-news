@@ -1,0 +1,91 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+
+\title{Research Proposal: Exploiting Positive Forgetting in Differentiable Search Indices via Temporal Document Representations}
+\author{Team: Vedik Agarwal, Kirthana Natarajan, Yuval Shemla, Yiyao Zhang}
+\date{Project Type: Analysis, Experimentation and Extension of a Research Paper}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction and Objective}
+Generative Retrieval, primarily instantiated as the Differentiable Search Index (DSI), encodes a corpus directly into the parametric space of a sequence-to-sequence language model. A critical limitation of DSI is its application to dynamic corpora; adapting to streaming documents typically leads to catastrophic forgetting, requiring computationally prohibitive retraining.
+
+Recent advancements in Continual Learning (CL) for Information Retrieval, such as \textbf{MixLoRA-DSI} (Huynh et al., 2025), have successfully mitigated catastrophic forgetting using parameter-efficient, out-of-distribution (OOD) expert expansion. However, current CL literature overwhelmingly frames \textit{all} forgetting as strictly negative. In real-world databases, from enterprise knowledge bases to scientific literature, temporal shifts are often highly structured. A core axiom of dynamic information retrieval is that if two documents share similar semantic relevance to a query, the newer document is functionally more relevant to the user's current context.
+
+\textbf{Objective:} This project proposes that in dynamically evolving databases, forgetting is a feature, not a bug. We aim to formalize and evaluate ``Positive Forgetting'' - the phenomenon where a DSI's loss of a previously relevant document identifier (DocID) is actively beneficial because it is superseded by a newly learned, more recent, and equally or more relevant DocID. Furthermore, we propose an architectural intervention, Temporal Document Representations, designed to explicitly encourage this recency bias within a MixLoRA-DSI framework. To empirically validate this generalized phenomenon, we will evaluate our approach using a longitudinal news dataset, which serves as a highly structured, human-annotated proxy for real-world temporal intent drift.
+
+\section{Implementation Details}
+
+\subsection{Base Framework: MixLoRA-DSI}
+We will use \textbf{MixLoRA-DSI} as our base continual learning strategy. MixLoRA-DSI utilizes a dynamically expandable Mixture-of-Experts (MoE) architecture powered by Low-Rank Adaptation (LoRA). Instead of allocating new experts arbitrarily, it uses a layer-wise OOD-driven strategy to selectively introduce new experts only when novel information (new documents) cannot be captured by existing parameters. This provides a sublinear parameter growth model that enables rehearsal-free continual learning.
+
+\subsection{Intervention: Chrono-Semantic DocIDs}
+Standard DSIs map documents to arbitrary atomic integers or semantic clusters (e.g., Residual Quantization or hierarchical k-means). To encourage ``positive forgetting'', we will construct \textbf{Chrono-Semantic Document Identifiers}. 
+By prepending a temporal structural marker to the semantic cluster, the autoregressive decoder is structurally biased toward generating recent time-tokens. 
+
+\begin{itemize}
+    \item \textbf{Format:} \texttt{[Year]-[Month]-[Semantic\_Cluster\_ID]}
+    \item \textbf{Mechanism:} When the DSI processes a temporally evolving query, the MixLoRA routing mechanism will preferentially activate newly added LoRA experts that strongly associate the query with recent \texttt{[Year]-[Month]} tokens, effectively overpowering the older semantic pathways without destroying the model's underlying linguistic knowledge.
+\end{itemize}
+
+\section{Evaluation Methodology}
+
+\subsection{Dataset: TREC News Track (Washington Post Corpus)}
+To empirically prove that the forgotten documents are replaced by \textit{better} ones, we require longitudinal human relevance judgments. We will utilize the \textbf{TREC News Track (2018--2021)}, built on the Washington Post archive.
+
+\begin{itemize}
+    \item \textbf{Chronological Training Pipeline:} The MixLoRA-DSI will be sequentially trained on the corpus year by year (e.g., $T_1 = 2018, T_2 = 2019$, etc.).
+    \item \textbf{Query Sets:} We will use the Background Linking and Entity Ranking query sets provided by TREC for each respective year to measure how the system adapts to shifting intent.
+\end{itemize}
+
+\subsection{Metrics: Formalizing Positive Forgetting}
+Standard Continual Learning metrics (like Backward Transfer) penalize any drop in performance on task $T_{old}$ after learning $T_{new}$. We will introduce the \textbf{Positive Forgetting Rate (PFR)}. 
+
+Let $M_t$ represent the model weights after training on time-step $t$. Let $q$ be a query, and $D$ be a document. Positive forgetting occurs when the probability of retrieving an older document $D_{old}$ drops, but is replaced by a newer document $D_{new}$ that human assessors have judged as highly relevant. We define this mathematically as:
+
+$$PFR = \frac{1}{|Q|} \sum_{q \in Q} \mathbb{I} \Big( P(D_{new} \mid q, M_t) > P(D_{old} \mid q, M_{t-1}) \Big)$$
+
+\noindent \textit{Subject to the temporal and relevance constraints:}
+
+$$date(D_{new}) > date(D_{old}) \quad \land \quad rel(D_{new}, q) \ge rel(D_{old}, q)$$
+
+\noindent Where $rel(D, q)$ is the ground-truth relevance score from the TREC qrels. If $PFR$ increases alongside our Chrono-Semantic DocIDs, we successfully demonstrate that the model is selectively forgetting outdated context in favor of relevant recency.
+
+
+\subsection{Baselines: FIFO \& LRA}
+
+To isolate the effect of our proposed Chrono-Semantic DocIDs from alternative expert replacement policies under fixed capacity, we compare against the following baselines:
+
+\begin{itemize}
+    \item \textbf{FIFO Expert Pruning:}  
+    When a new LoRA expert is added due to OOD detection, the oldest created expert is removed. This enforces a fixed-capacity model and induces hard temporal forgetting.
+
+    \item \textbf{Least Recently Activated (LRA) Expert Pruning:}  
+    Instead of pruning by creation time, we remove the expert that has been least frequently or least recently activated by the routing mechanism. This represents a usage-based forgetting strategy.
+\end{itemize}
+
+ The key distinction lies in the replacement policy: FIFO and LRA rely on heuristic deletion rules, whereas our Chrono-Semantic strategy introduces temporally structured bias into expert selection and replacement.
+
+
+If Chrono-Semantic DocIDs outperform FIFO and LRA while preserving overall retrieval quality, this would demonstrate that positive forgetting emerges from temporally informed expert allocation rather than heuristic pruning alone.
+
+% \section{Expected Outcomes}
+% \begin{enumerate}
+%     \item \textbf{A Paradigm Shift in IR Continual Learning:} Empirical proof that penalizing a generative retrieval model for forgetting old docids is flawed if the domain is temporal.
+%     \item \textbf{Validation of Temporal DocIDs:} Demonstration that Chrono-Semantic DocIDs organically improve the routing of MixLoRA-DSI experts toward newer, highly relevant data streams.
+% \end{enumerate}
+
+\section{Key References}
+\begin{itemize}
+    \item Huynh, T.-L., Vu, T.-T., Wang, W., Le, T., Gasevic, D., Li, Y.-F., \& Do, T.-T. (2025). \textit{MixLoRA-DSI: Dynamically Expandable Mixture-of-LoRA Experts for Rehearsal-Free Generative Retrieval over Dynamic Corpora}. EMNLP 2025.
+    \item Tay, Y., Tran, V., Dehghani, M., Ni, J., Bahri, D., Mehta, H., ... \& Metzler, D. (2022). \textit{Transformer memory as a differentiable search index}. Advances in Neural Information Processing Systems, 35, 21831-21843.
+    \item Soboroff, I., Huang, S., \& Harman, D. (2018-2021). \textit{Overview of the TREC News Track}. Text REtrieval Conference (TREC).
+\end{itemize}
+
+\end{document}
