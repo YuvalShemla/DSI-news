@@ -3,3 +3,37 @@ pandas
 pyarrow
 tqdm
 google-generativeai
+
+# accelerate==0.34.0
+# adapters==1.0.1
+# apex==0.9.10dev
+# beartype==0.20.2
+# bitsandbytes==0.43.1
+# CoLT5_attention==0.11.1
+# cuml==0.6.1.post1
+# datasets==2.21.0
+# einops==0.8.1
+# einx==0.3.0
+# ema_pytorch==0.7.0
+# faiss==1.8.0
+# h5py==3.13.0
+# huggingface_hub==0.24.6
+# joblib==1.4.2
+# matplotlib==3.10.1
+# msgspec==0.18.6
+# numpy==2.2.5
+# optuna==4.3.0
+# orjson==3.10.18
+# packaging==25.0
+# pandas==2.2.3
+# peft==0.11.1
+# pytrec_eval==0.5
+# safetensors==0.5.3
+# scikit_learn==1.6.1
+# seaborn==0.13.2
+# sentence_transformers==4.1.0
+# torch==2.3.0+cu121
+# torch_xla==2.7.0
+# tqdm==4.66.5
+# transformers==4.44.2
+# ujson==5.10.0

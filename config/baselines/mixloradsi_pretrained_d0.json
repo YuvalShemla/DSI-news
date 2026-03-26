@@ -1,0 +1,5 @@
+{
+  "slow_learn_rq": false,
+  "kl_loss": false,
+  "no_aux_loss": true
+}
