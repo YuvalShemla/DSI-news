@@ -1,6 +1,9 @@
 # Claude Code local config
 .claude/
 
+# Original MixLoRA-DSI reference repo (cloned separately)
+MixLoRA-DSI/
+
 # Downloaded datasets (large Parquet files)
 data/cc-news/
 data/bbc-news/
