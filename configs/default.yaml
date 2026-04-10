@@ -1,0 +1,85 @@
+# =============================================================================
+# DSI-CL Default Configuration
+# =============================================================================
+
+# --- Model ---
+model:
+  backbone: "google/t5gemma-2-270m-270m"
+  torch_dtype: "bfloat16"
+  lora:
+    r: 16
+    lora_alpha: 32
+    target_modules: ["q_proj", "k_proj", "v_proj", "o_proj"]
+    lora_dropout: 0.05
+
+# --- DocID ---
+docid:
+  rq_codebooks: 6         # M=6 codebooks for semantic portion
+  rq_bits: 8              # 256 centroids per codebook
+  embedding_dim: 768      # sentence-transformer embedding dim
+  # Total special tokens: 9 year + 12 month + 6*256 RQ = 1557
+  year_range: [2017, 2025]
+  encoder_model: "sentence-transformers/all-mpnet-base-v2"
+
+# --- Data ---
+data:
+  cc_news:
+    parquet_path: "data/cc-news/cc_news.parquet"
+    text_col: "text"
+    date_col: "date"
+    id_col: "url"
+    split_granularity: "quarter"  # Q1-Q4 per year
+  bbc_news:
+    parquet_path: "data/bbc-news/bbc_news_alltime.parquet"
+    text_col: "content"
+    date_col: "published_date"
+    id_col: "link"
+    split_granularity: "month"
+
+# --- Training ---
+training:
+  d0:
+    learning_rate: 5.0e-4
+    batch_size: 128
+    num_epochs: 15
+    warmup_ratio: 0.04
+    weight_decay: 0.01
+    max_query_length: 64
+    max_docid_length: 8     # 2 chrono + 6 RQ tokens
+    scheduler: "cosine"
+    fp16: false
+    bf16: true
+
+  cl:
+    strategy: "merge"        # Options: replay, merge, compose, null_space
+    replay:
+      buffer_size: 10000
+      replay_ratio: 0.3     # 30% replay, 70% new data
+    merge:
+      alpha_decay: 0.9      # merged = alpha*old + (1-alpha)*new; alpha decays
+    compose:
+      max_loras: 8          # Max LoRAs before pruning
+      pruning: "fifo"       # Options: fifo, lra
+    null_space:
+      projection_eps: 1.0e-6
+
+# --- Evaluation ---
+evaluation:
+  num_beams: 100
+  max_new_tokens: 8
+  topk: 100
+  metrics:
+    - "mrr_10"
+    - "ndcg_cut_5"
+    - "ndcg_cut_10"
+    - "recall_10"
+    - "recall_100"
+  filter_query_ratio: 0.3   # 30% of eval queries get time filters
+
+# --- Experiment ---
+experiment:
+  seed: 42
+  output_dir: "outputs"
+  logging_steps: 50
+  save_strategy: "epoch"
+  wandb_project: "dsi-cl"

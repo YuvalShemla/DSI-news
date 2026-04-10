@@ -8,6 +8,11 @@ MixLoRA-DSI/
 data/cc-news/
 data/bbc-news/
 
+# Generated data artifacts
+data/splits/
+data/embeddings/
+data/docids/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -28,7 +33,9 @@ env/
 *.pth
 *.bin
 *.ckpt
+*.safetensors
 checkpoints/
+outputs/
 
 # OS
 .DS_Store
@@ -54,3 +61,7 @@ Thumbs.db
 # Experiment outputs (large)
 experiments/runs/
 wandb/
+
+# FAISS indexes
+*.index
+*.mmap
